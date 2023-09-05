@@ -11,6 +11,8 @@ import StatsScraperButton from "./StatsScraperButton";
 import ScreenReaderButton from "./ScreenReaderButton";
 import GraphGen from "./GraphGen";
 import { environment } from "@/environment";
+import settingsLogo from "./assets/settings.png";
+import Settings from './settings';
 
 interface ItemTotals {
   total_purchase_price: number;
@@ -31,11 +33,19 @@ async function fetchItemTotals(): Promise<ItemTotals> {
   }
 }
 
+
+
 export default function Home() {
   const [itemTotals, setItemTotals] = useState<ItemTotals>({
     total_purchase_price: 0,
     total_listed_price: 0,
   });
+
+  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+
+  const toggleSettingsVisibility = () => {
+    setIsSettingsVisible(prevState => !prevState);
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,38 +62,53 @@ export default function Home() {
     };
   }, []);
 
-  return (
-    <div className="flex h-full min-h-screen text-purple-custom-light bg-gradient-to-b from-black-custom via-cyan-900 to-cyan-800">
-      <div className="w-1/2 text-center items-center p-32 justify-center">
-        <Clock />
 
+  return (
+    <div className="">
+      <Clock />
+
+      <div className="main-subprocess-control-block">
+        <div className="subprocess-header">
+          Subprocess Control
+        </div>
+        <div className="module-row">
+          <StatsScraperButton />
+          <LiveScraperButton />
+          <ScreenReaderButton />
+        </div>
+      </div>
+
+      <div className="settings-container">
+        <a><img src={settingsLogo.src} alt="Settings" className="settings-logo" onClick={toggleSettingsVisibility}/></a>
+      </div>
+
+      <div className="inventory-manager">
+        
+        {/*
         <h1 className="text-center font-semibold pb-12 text-4xl">
           Inventory Manager
         </h1>
+  */}
         <BuyBlock />
         <br></br>
         <RowDisplay />
-        <br></br>
-        <div className="p-4 rounded-md  bg-black-custom shadow-lg shadow-slate-400">
+        <div className="inventory-summary">
           Total Purchase Price: {itemTotals.total_purchase_price}
           <br />
           Total Listed Price: {itemTotals.total_listed_price}
         </div>
       </div>
-      <div className="w-1/2 text-center items-center p-32 justify-center">
-        <h1 className="text-center font-semibold pb-12 text-4xl">
-          Transaction Control
-        </h1>
-        <div className="p-4 rounded-full bg-black-custom shadow-lg shadow-slate-400">
-          <StatsScraperButton />
-          <LiveScraperButton />
-          <ScreenReaderButton />
+
+      <div className="visuals-block">
+        <div className="module-header">
+            Visualizations
         </div>
-        <h1 className="text-center font-semibold p-12 text-4xl">
-          Visualizations
-        </h1>
         <GraphGen />
       </div>
+
+      {isSettingsVisible && <Settings onShow={() => setIsSettingsVisible(false)}/>}
+
     </div>
+   
   );
 }

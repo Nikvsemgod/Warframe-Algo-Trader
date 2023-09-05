@@ -1,9 +1,11 @@
 import { environment } from "@/environment";
 import { ChangeEvent, useState } from "react";
 import { useEffect } from "react";
+import CSS from 'csstype';
 
 export default function BuyBlock() {
   const [itemName, setItemName] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [price, setPrice] = useState("");
   const [allItemNames, setAllItemNames] = useState<string[]>([]);
 
@@ -19,14 +21,22 @@ export default function BuyBlock() {
   const handleItemNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const inputValue = event.target.value;
     const formattedInputValue = inputValue.replace(/\s+/g, "_");
-    setItemName(formattedInputValue);
+    setItemName(inputValue);
   };
 
-  const handleButtonClick = () => {
+  const handleButtonClick = (buttonId : string) => {  
     if (itemName === "" || price === "" || isNaN(Number(price))) {
-      // Check if either textbox is empty or price is not a number
+      console.log(price);
+      console.log(Number(price));
+      console.log(isNaN(Number(price)));
       return;
     }
+
+    var defaultQuantity = quantity;
+    if (quantity === "") {
+      defaultQuantity = "1";
+    }
+
 
     const formattedItemName = itemName.replace(/\s+/g, "_").toLowerCase();
 
@@ -38,10 +48,29 @@ export default function BuyBlock() {
     const itemData = {
       name: formattedItemName,
       purchasePrice: price,
-      number: 1,
+      number: defaultQuantity,
     };
-    (document.getElementById("buyButton") as HTMLButtonElement)!.disabled =
-      true;
+    (document.getElementById(buttonId) as HTMLButtonElement)!.disabled = true;
+
+    if (buttonId === "buyButton") {
+      const transactionData = {
+        name: formattedItemName,
+        transaction_type: "buy",
+        price: price,
+      };
+
+      fetch(`${environment.API_BASE_URL}/market/close`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(transactionData),
+      })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log(data);
+      })
+    }
 
     fetch(`${environment.API_BASE_URL}/item`, {
       method: "POST",
@@ -60,6 +89,7 @@ export default function BuyBlock() {
           name: formattedItemName,
           transaction_type: "buy",
           price: price,
+          number: defaultQuantity
         };
 
         fetch(`${environment.API_BASE_URL}/transaction`, {
@@ -77,6 +107,7 @@ export default function BuyBlock() {
             // Reset input values
             setItemName("");
             setPrice("");
+            setQuantity("");
 
             //window.location.reload();
           })
@@ -86,16 +117,17 @@ export default function BuyBlock() {
 
     setItemName("");
     setPrice("");
+    setQuantity("");
 
-    (document.getElementById("buyButton") as HTMLButtonElement)!.disabled =
+    (document.getElementById(buttonId) as HTMLButtonElement)!.disabled =
       false;
   };
 
   return (
-    <div className="items-center justify-center p-8 pb-12 rounded-full  bg-black-custom shadow-lg shadow-slate-400">
-      <h1 className="pb-4 text-lg">Purchase New Item:</h1>
+    <div className="main-buy-block">
+      <div className="module-header">Purchase New Item</div>
       <input
-        className="text-center py-2 px-4 mb-4 border border-purple-custom-saturated rounded-lg bg-slate-600 text-white-custom"
+        className=""
         type="text"
         list="itemNames"
         placeholder="Item Name"
@@ -104,23 +136,37 @@ export default function BuyBlock() {
       />
       <datalist id="itemNames">
         {allItemNames.map((name) => (
-          <option key={name} value={name} />
+          <option key={name} value={name.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())} />
         ))}
       </datalist>
       <input
-        className="text-center py-2 px-4 mb-4 border border-purple-custom-saturated rounded-lg bg-slate-600 text-white-custom"
+        className=""
         type="text"
-        placeholder="Price"
+        placeholder="Quantity"
+        value={quantity}
+        onChange={(event) => setQuantity(event.target.value)}
+      />
+      <input
+        className=""
+        type="text"
+        placeholder="Price Per Item"
         value={price}
         onChange={(event) => setPrice(event.target.value)}
       />
-      <div className="pt-2">
+      <div className="button-collection">
         <button
-          className="py-2 px-6 rounded-md bg-purple-custom-saturated text-white-custom shadow-md shadow-purple-700"
-          onClick={handleButtonClick}
+          className=""
+          onClick={() => handleButtonClick("buyButton")}
           id="buyButton"
         >
           Buy
+        </button>
+        <button
+          className=""
+          onClick={() => handleButtonClick("addButton")}
+          id="addButton"
+        >
+          Buy (w/o Reporting)
         </button>
       </div>
     </div>
